@@ -5,7 +5,7 @@
 /mern/backend/node_modules
 /mern/client/.pnp
 /mern/client/.pnp.js
-/mern/database/data/journal
+/mern/database
 
 # testing
 /mern/client/coverage

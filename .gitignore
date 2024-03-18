@@ -1,0 +1,25 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/mern/client/node_modules
+/mern/backend/node_modules
+/mern/client/.pnp
+/mern/client/.pnp.js
+/mern/database/data/journal
+
+# testing
+/mern/client/coverage
+
+# production
+/mern/client/build
+
+# misc
+/mern/client/.DS_Store
+/mern/client/.env.local
+/mern/client/.env.development.local
+/mern/client/.env.test.local
+/mern/client/.env.production.local
+
+/mern/client/npm-debug.log*
+/mern/client/yarn-debug.log*
+/mern/client/yarn-error.log*

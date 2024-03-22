@@ -26,20 +26,38 @@ router.get('/', (req, res) => {
   res.json({ message: 'Hello, World!' });
 });
 
-router.get('/comments', (req, res) => {
-    Comment.find()
-      .then(comments => {
-        res.json({ success: true, data: comments });
-      })
-      .catch(err => {
-        res.json({ success: false, data: { error: err } });
-      });
-  });
+// router.get('/comments', (req, res) => {
+//     Comment.find()
+//       .then(comments => {
+//         res.json({ success: true, data: comments });
+//       })
+//       .catch(err => {
+//         res.json({ success: false, data: { error: err } });
+//       });
+//   });
+
+
+router.post('/trigger', (req, res) => {
+
+const action = req.body.trigger;
+
+console.log("Nom entré: " + action);
+res.json({ success: true, message: action });
+
+switch (action) {
+    case 'newgame':
+        console.log("Lancement d'une nouvelle partie");
+        break;
+    case 'abandon':
+        console.log('Langue au chat');
+        break;
+
+    default:
+        console.log('Comparaison avec' + action);
+}
+});
 
 // Use our router configuration when we call /api
 app.use('/api', router);
 
 app.listen(API_PORT, () => console.log(`Listening on port ${API_PORT}`));
-
-
-

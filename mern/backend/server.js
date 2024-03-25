@@ -69,9 +69,8 @@ switch (action) {
     default:
         console.log('Comparaison avec' + action);
         const comparisonResult = compareInfo(dic1, dic2);
-        let responseData = {success: true, comparisonResult: comparisonResult};
+        let responseData = {success: true, etatDuJeu: comparisonResult};
         res.json(responseData);
-        break;
 }
 });
 

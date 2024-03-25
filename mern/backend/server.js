@@ -1,45 +1,46 @@
-// server.js
+const express = require('express');
+const mongoose = require('mongoose');
+const Telecom = require('./model/Telecom');
 
-// first we import our dependencies…
-const express = require("express");
-const bodyParser = require("body-parser");
-const mongoose = require("mongoose");
-const Comment = require("./model/comment");
-
-// and create our instances
 const app = express();
-const router = express.Router();
+const PORT = 3001;
 
-// set our port to either a predetermined port number if you have set it up, or 3001
-const API_PORT = process.env.API_PORT || 3001;
-
-mongoose.connect("mongodb://localhost:3010/");
-var db = mongoose.connection;
-db.on('error', () => console.error('Erreur de connexion'));
-
-// now we should configure the API to use bodyParser and look for JSON data in the request body
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-
-// now we can set the route path & initialize the API
-router.get('/', (req, res) => {
-  res.json({ message: 'Hello, World!' });
+mongoose.connect('mongodb://localhost:3010/Telecom', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => {
+  console.log('Connexion à la base de données réussie');
+})
+.catch((err) => {
+  console.error('Erreur lors de la connexion à la base de données :', err);
 });
 
-router.get('/comments', (req, res) => {
-    Comment.find()
-      .then(comments => {
-        res.json({ success: true, data: comments });
-      })
-      .catch(err => {
-        res.json({ success: false, data: { error: err } });
-      });
-  });
+// Route pour récupérer toutes les données de la base de données
+app.get('/telecom', async (req, res) => {
+  try {
+    const data = await Telecom.find().select('-_id');
+    console.log('Données récupérées avec succès :', data);
+    res.json(data);
+  } catch (err) {
+    console.error('Erreur lors de la récupération des données :', err);
+    res.status(500).json({ error: 'Erreur lors de la récupération des données' });
+  }
+});
 
-// Use our router configuration when we call /api
-app.use('/api', router);
+// Route pour récupérer un élément aléatoire de la base de données
+app.get('/random', async (req, res) => {
+  try {
+    const data = await Telecom.aggregate([{ $sample: { size: 1 } }, { $project: { _id: 0 } }]);
+    const randomData = data[0];
+    console.log('Donnée aléatoire récupérée avec succès :', randomData);
+    res.json(randomData);
+  } catch (err) {
+    console.error('Erreur lors de la récupération des données aléatoires :', err);
+    res.status(500).json({ error: 'Erreur lors de la récupération des données aléatoires' });
+  }
+});
 
-app.listen(API_PORT, () => console.log(`Listening on port ${API_PORT}`));
-
-
-
+app.listen(PORT, () => {
+  console.log(`Serveur démarré sur le port ${PORT}`);
+});

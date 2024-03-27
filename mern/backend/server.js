@@ -7,7 +7,6 @@ const app = express();
 const PORT = 3001;
 const router = express.Router();
 
-
 mongoose.connect('mongodb://localhost:3010/Telecom', {
   useNewUrlParser: true,
   useUnifiedTopology: true
@@ -27,6 +26,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 let data = [];
+let foundData; // Initialisez la variable foundData en dehors de la portée des routes
 
 // Récupérer les données de la BDD au démarrage du serveur
 async function fetchData() {
@@ -57,21 +57,9 @@ app.get('/telecom', async (req, res) => {
   }
 });
 
-// Fonction de comparaison
-function compareInfo(dict1, dict2) {
-  const res = {};
-  for (let key in dict1) {
-    // Vérifie si les valeurs sont identiques
-    res[key] = dict1[key] === dict2[key];
-  }
-  return res;
-}
-
-// Route POST pour le déclencheur
 router.post('/trigger', async (req, res) => {
   const action = req.body.trigger;
   console.log("Nom entré: " + action);
-  res.json({ success: true, message: action });
   try {
     switch (action) {
       case 'newgame':
@@ -81,43 +69,33 @@ router.post('/trigger', async (req, res) => {
         console.log('Langue au chat');
         break;
       default:
-        ////console.log('Comparaison avec ' + action);
-        const foundData = data.find(item => item.Nom === action);
+        foundData = data.find(item => item.Nom === action);
+        console.log(foundData)
         if (!foundData) {
           console.error(`Aucune donnée trouvée avec le nom "${action}"`);
-          res.status(404).json({ error: `Aucune donnée trouvée avec le nom "${action}}"` });
-          return;
+          return res.status(404).json({ error: `Aucune donnée trouvée avec le nom "${action}"` });
         }
-        ///const comparisonResult = compareInfo(foundData, foundData); // Utilisation de foundData pour dic1 et dic2
-        ///console.log('Résultat de la comparaison :', comparisonResult);
-        envoiInfos(foundData);
+        // Pas de retour de données ici
+        return res.json({ success: true, message: "Action traitée avec succès" });
     }
   } catch (error) {
     console.error('Erreur lors du traitement de la requête :', error);
-    res.status(500).json({ error: 'Erreur lors du traitement de la requête' });
+    return res.status(500).json({ error: 'Erreur lors du traitement de la requête' });
   }
 });
 
-// Fonction pour envoyer les informations à l'historique
-async function envoiInfos(message) {
+router.get('/historique', async (req, res) => {
   try {
-    const response = await fetch("/historique", {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ historique: message })
-    });
-
-    if (!response.ok) {
-      throw new Error('Erreur réseau');
+    if (!foundData) {
+      return res.status(404).json({ error: 'Aucune donnée trouvée' });
     }
-    console.log('Envoi sur l API réussi');
+    // Retournez les données trouvées ici
+    return res.json(foundData);
   } catch (error) {
-    console.error('Il y a eu une erreur lors du fetch:', error);
-    throw error; // Relancez l'erreur pour la capturer dans le routeur POST
+    console.error('Erreur lors de la récupération des données historiques :', error);
+    return res.status(500).json({ error: 'Erreur lors de la récupération des données historiques' });
   }
-}
+});
 
 app.use('/api', router);
 

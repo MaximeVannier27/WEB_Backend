@@ -1,8 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const Telecom = require('./model/Telecom');
-const axios = require('axios');
-
+const bodyParser = require("body-parser");
 
 const app = express();
 const PORT = 3001;
@@ -20,7 +19,12 @@ mongoose.connect('mongodb://localhost:3010/Telecom', {
   console.error('Erreur lors de la connexion à la base de données :', err);
 });
 
-app.use(express.json());
+router.get('/', (req, res) => {
+  res.json({ message: 'Hello, World!' });
+});
+
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
 let data = [];
 
@@ -86,7 +90,7 @@ router.post('/trigger', async (req, res) => {
         }
         ///const comparisonResult = compareInfo(foundData, foundData); // Utilisation de foundData pour dic1 et dic2
         ///console.log('Résultat de la comparaison :', comparisonResult);
-        await envoiInfos(foundData);
+        envoiInfos(foundData);
     }
   } catch (error) {
     console.error('Erreur lors du traitement de la requête :', error);
@@ -96,9 +100,8 @@ router.post('/trigger', async (req, res) => {
 
 // Fonction pour envoyer les informations à l'historique
 async function envoiInfos(message) {
-  console.log(JSON.stringify({ historique: message }))
   try {
-    const response = await fetch("api/historique", {
+    const response = await fetch("/historique", {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

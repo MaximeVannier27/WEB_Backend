@@ -54,6 +54,7 @@ router.get('/', (req, res) => {
 router.post('/trigger', (req, res) => {
 
 const action = req.body.trigger;
+let compteur_essai = 0;
 
 console.log("Nom entré: " + action);
 res.json({ success: true, message: action });
@@ -61,6 +62,38 @@ res.json({ success: true, message: action });
 switch (action) {
     case 'newgame':
         console.log("Lancement d'une nouvelle partie");
+        compteur_essai = 0;
+        // choix random Perso
+        //+1 dans la base de données à Statistiques.Statistiques[Nom_Du_Prof][Tirages]
+
+        let recurrence = 0;
+        let essais = 0;
+        let stats = {"nom": "", "moyenne":0};
+        let stats_triees = [];
+        let stats_envoi = {"meilleur": [], "pire":[]};
+
+        for (const i in Statistiques.Statistiques) {
+          stats["nom"] = i["nom"];
+          stats["moyenne"] = i["Trouvé"]/i["Tirages"];
+          if (stats_triees.length==0) {
+            stats_triees.push(stats)
+          } else {
+            for (let j = 0; j<stats_triees.length; j++) {
+              if (stats["moyenne"]<=stats_triees[j]["moyenne"] || j==stats_triees.length-1) {
+                stats_triees.splice(j,0,stats);
+                break;
+              }
+            }
+          }
+        }
+
+        for (let i = 0; i<5;i++) {
+          stats_envoi["meilleur"].push(stats_triees[i]);
+          stats_envoi["pire"].push(stats_triees[stats_triees.length-i]);
+        }
+        
+        //envoi au front de stats_envoi
+
         break;
     case 'abandon':
         console.log('Langue au chat');
@@ -68,8 +101,12 @@ switch (action) {
 
     default:
         console.log('Comparaison avec' + action);
+        compteur_essai += 1;
+        if (dic1["Nom"]==dic2["Nom"]) {
+          //+compteur_essai dans la base de données à Statistiques.Statistiques[Nom_Du_Prof][Trouvé]
+        }
         const comparisonResult = compareInfo(dic1, dic2);
-        let responseData = {success: true, etatDuJeu: comparisonResult};
+        let responseData = {"success": true, "etatDuJeu": comparisonResult};
         res.json(responseData);
 }
 });

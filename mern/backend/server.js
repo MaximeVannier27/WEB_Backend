@@ -10,18 +10,104 @@ const Comment = require("./model/comment");
 const app = express();
 const router = express.Router();
 
+const info_joueur = {
+    "Nom" : false,
+    "Photo": false,
+    "Genre" : false,
+    "Siècle" : false,
+    "MBTI" : false,
+    "Animal" : false,
+    "Formation" : false,
+    "Récompense" : false,
+    "Nationalité" : false,
+    "Domaine" : false
+}
+
+const dico_test1 = {
+    "Nom" : "Albert Einstein",
+    "Photo": "AE",
+    "Genre" : "M",
+    "Siècle" : "20",
+    "MBTI" : "INTP",
+    "Animal" : "Chat",
+    "Formation" : "Polytechnique",
+    "Récompense" : "Prix Nobel",
+    "Nationalité" : "Allemande/Américaine",
+    "Domaine" : "Physique"
+}
+
+const dico_test2 = {
+    "Nom" : "Albert Einstein",
+    "Photo": "",
+    "Genre" : "",
+    "Siècle" : "20",
+    "MBTI" : "INTP",
+    "Animal" : "",
+    "Formation" : "Polytechnique",
+    "Récompense" : "Prix Nobel",
+    "Nationalité" : "Américaine",
+    "Domaine" : ""
+}
+
+const dico_test3 = {
+    "Nom" : "",
+    "Photo": "",
+    "Genre" : "",
+    "Siècle" : "",
+    "MBTI" : "",
+    "Animal" : "",
+    "Formation" : "",
+    "Récompense" : "",
+    "Nationalité" : "Allemande",
+    "Domaine" : ""
+}
+
 // function of comparaison
 function compareInfo(dict1, dict2) {
-    res = {}
     for (let key in dict1) {
-      // Check if their values are same
-      if (dict2[key] == dict1[key]) {
-        res[key] = dict1[key];
-      } else {
-        res[key] = false;
-      }
+        if (dict1[key].includes('/')) {
+            if (dict2[key].includes('/')) {
+                let element = dict2[key].split('/');
+                for (let elements in element) {
+                    if (dict1[key].includes(elements) && (!(info_joueur[key]) || !(info_joueur[key].includes(elements)))) {
+                        if ((info_joueur[key]) && info_joueur[key].includes('/')) {
+                            info_joueur[key] = info_joueur[key]+elements;
+                        }
+                        else {
+                            info_joueur[key] = elements + '/';
+                        }
+                    }
+                }
+            }
+            else {
+                if (dict1[key].includes(dict2[key]) && (!(info_joueur[key]) || !(info_joueur[key].includes(dict2[key])))) {
+                    if ((info_joueur[key]) && info_joueur[key].includes('/')) {
+                        info_joueur[key] = info_joueur[key]+dict2[key];
+                    }
+                    else {
+                        info_joueur[key] = dict2[key] + '/';
+                    }
+                }
+            }
+        }
+        else {
+            if (dict2[key].includes('/')) {
+                let element = dict2.split('/');
+                for (let elements in element) {
+                    if (elements == dict1[key]) {
+                        info_joueur[key] = dict1[key];
+                    }
+                }
+            }
+            else {
+                if (dict2[key] == dict1[key]) {
+                    info_joueur[key] = dict1[key];
+                }
+            }
+        }
+        
     }
-    return res;
+    return;
 }
 
 // set our port to either a predetermined port number if you have set it up, or 3001
@@ -78,3 +164,8 @@ switch (action) {
 app.use('/api', router);
 
 app.listen(API_PORT, () => console.log(`Listening on port ${API_PORT}`));
+
+compareInfo(dico_test1,dico_test2);
+console.log(info_joueur);
+compareInfo(dico_test1,dico_test3);
+console.log(info_joueur);

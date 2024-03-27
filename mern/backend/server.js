@@ -64,15 +64,12 @@ switch (action) {
         console.log("Lancement d'une nouvelle partie");
         compteur_essai = 0;
         // choix random Perso
-        //+1 dans la base de données à Statistiques.Statistiques[Nom_Du_Prof][Tirages]
 
-        let recurrence = 0;
-        let essais = 0;
         let stats = {"nom": "", "moyenne":0};
         let stats_triees = [];
         let stats_envoi = {"meilleur": [], "pire":[]};
 
-        for (const i in Statistiques.Statistiques) {
+        for (const i in 0/*lire dans Statistiques.Statistiques*/) {
           stats["nom"] = i["nom"];
           stats["moyenne"] = i["Trouvé"]/i["Tirages"];
           if (stats_triees.length==0) {
@@ -103,7 +100,14 @@ switch (action) {
         console.log('Comparaison avec' + action);
         compteur_essai += 1;
         if (dic1["Nom"]==dic2["Nom"]) {
-          //+compteur_essai dans la base de données à Statistiques.Statistiques[Nom_Du_Prof][Trouvé]
+          //+compteur_essai dans la base de données à Statistiques.Statistiques[dic1["Nom"]][Trouvé]
+
+
+          //+1 dans la base de données à Statistiques.Statistiques[dic1["Nom"]][Tirages]
+          db.Statistiques.updateOne(
+            {"Nom": dic1["Nom"]},
+            {$inc: {"Tirages": 1}}
+          );
         }
         const comparisonResult = compareInfo(dic1, dic2);
         let responseData = {"success": true, "etatDuJeu": comparisonResult};
@@ -115,3 +119,4 @@ switch (action) {
 app.use('/api', router);
 
 app.listen(API_PORT, () => console.log(`Listening on port ${API_PORT}`));
+

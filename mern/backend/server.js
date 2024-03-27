@@ -1,6 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const Telecom = require('./model/Telecom');
+const axios = require('axios');
+
 
 const app = express();
 const PORT = 3001;
@@ -20,7 +22,7 @@ app.use(express.json());
 
 let data = [];
 
-// Récupérer les données de la BDD
+// Récupérer les données de la BDD au démarrage du serveur
 async function fetchData() {
   try {
     data = await Telecom.find().select('-_id');
@@ -30,11 +32,14 @@ async function fetchData() {
   }
 }
 
+// Appeler fetchData une fois au démarrage du serveur
+fetchData();
+
 // Tirer aléatoirement une personne dans la BDD
 app.get('/telecom', async (req, res) => {
   try {
     if (data.length === 0) {
-      await fetchData();
+      throw new Error('Aucune donnée disponible');
     }
 
     const randomIndex = Math.floor(Math.random() * data.length);
@@ -44,69 +49,76 @@ app.get('/telecom', async (req, res) => {
     res.json(randomData);
   } catch (err) {
     console.error('Erreur lors de la récupération des données aléatoires :', err);
-    res.status(500).json({ error: 'Erreur lors de la récupération des données aléatoires' });
+    res.status(500).json({ error: err.message || 'Erreur lors de la récupération des données aléatoires' });
   }
 });
 
-// Récupérer sur l'API du front (/api/trigger) le nom de la personne cliquée puis chercher ses infos et poster sur l'API /historique
-app.post('/api/trigger', async (req, res) => {
-  try {
-    // Récupérer le nom depuis le corps de la requête POST
-    const name = req.body.trigger;
+// Fonction de comparaison
+function compareInfo(dict1, dict2) {
+  const res = {};
+  for (let key in dict1) {
+    // Vérifie si les valeurs sont identiques
+    res[key] = dict1[key] === dict2[key];
+  }
+  return res;
+}
 
-    // Vérifier si le nom est présent dans le corps de la requête
-    if (!name) {
-      return res.status(400).json({ error: 'Le nom est requis dans la requête' });
+// Route POST pour le déclencheur
+app.post('/trigger', async (req, res) => {
+  const action = req.body.trigger;
+  console.log("Nom entré: " + action);
+  res.json({ success: true, message: action });
+
+  // Assurez-vous que `name` est défini
+  const name = action;
+
+  try {
+    switch (action) {
+      case 'newgame':
+        console.log("Lancement d'une nouvelle partie");
+        break;
+      case 'abandon':
+        console.log('Langue au chat');
+        break;
+      default:
+        console.log('Comparaison avec ' + action);
+        const foundData = data.find(item => item.Nom === name);
+        if (!foundData) {
+          console.error(`Aucune donnée trouvée avec le nom "${name}"`);
+          res.status(404).json({ error: `Aucune donnée trouvée avec le nom "${name}"` });
+          return;
+        }
+        const comparisonResult = compareInfo(foundData, foundData); // Utilisation de foundData pour dic1 et dic2
+        console.log('Résultat de la comparaison :', comparisonResult);
+        await envoiInfos(foundData);
+    }
+  } catch (error) {
+    console.error('Erreur lors du traitement de la requête :', error);
+    res.status(500).json({ error: 'Erreur lors du traitement de la requête' });
+  }
+});
+
+// Fonction pour envoyer les informations à l'historique
+async function envoiInfos(message) {
+  try {
+    const response = await fetch(`http://localhost:3001/historique`, { // Remplacez l'URL par l'API historique correcte
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ historique: message })
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur réseau');
     }
 
-    // Recherche dans les données
-    const foundData = data.find(item => item.Nom === name);
-
-    // Si aucune donnée n'est trouvée avec le nom spécifié, renvoyer une réponse 404
-    if (!foundData) {
-      return res.status(404).json({ error: `Aucune donnée trouvée avec le nom "${name}"` });
-    }
-
-    // Une fois que les données sont trouvées, les poster sur /historique
-    // Pour l'instant, nous renvoyons simplement les données comme exemple
-    res.status(200).json(foundData);
-  } catch (err) {
-    console.error('Erreur lors de la récupération du nom depuis le front-end :', err);
-    res.status(500).json({ error: 'Erreur lors de la récupération du nom depuis le front-end' });
+    console.log('Envoi sur l API réussi');
+  } catch (error) {
+    console.error('Il y a eu une erreur lors du fetch:', error);
+    throw error; // Relancez l'erreur pour la capturer dans le routeur POST
   }
-});
-
-// Endpoint pour poster les informations sur /historique
-app.post('/historique', async (req, res) => {
-  try {
-    // Récupérer les informations depuis le corps de la requête POST
-    const dataToPost = req.body;
-
-    // Poster les informations sur /historique
-    // Vous pouvez implémenter la logique appropriée ici, par exemple, enregistrer les données dans une base de données
-    console.log('Données reçues :', dataToPost);
-    res.status(200).json({ message: 'Données reçues avec succès sur /historique' });
-  } catch (err) {
-    console.error('Erreur lors de la récupération des données à poster sur /historique :', err);
-    res.status(500).json({ error: 'Erreur lors de la récupération des données à poster sur /historique' });
-  }
-});
-
-// Route pour récupérer les informations depuis /historique
-app.get('/historique', async (req, res) => {
-  try {
-    // Récupérer les informations depuis le corps de la requête POST
-    const dataToPost = req.body;
-
-    // Poster les informations sur /historique
-    // Vous pouvez implémenter la logique appropriée ici, par exemple, enregistrer les données dans une base de données
-    console.log('Données reçues :', dataToPost);
-    res.status(200).json({ message: 'Données reçues avec succès sur /historique' });
-  } catch (err) {
-    console.error('Erreur lors de la récupération des données à poster sur /historique :', err);
-    res.status(500).json({ error: 'Erreur lors de la récupération des données à poster sur /historique' });
-  }
-});
+}
 
 app.listen(PORT, () => {
   console.log(`Serveur démarré sur le port ${PORT}`);

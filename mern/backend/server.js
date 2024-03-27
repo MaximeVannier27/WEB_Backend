@@ -6,6 +6,8 @@ const axios = require('axios');
 
 const app = express();
 const PORT = 3001;
+const router = express.Router();
+
 
 mongoose.connect('mongodb://localhost:3010/Telecom', {
   useNewUrlParser: true,
@@ -26,7 +28,6 @@ let data = [];
 async function fetchData() {
   try {
     data = await Telecom.find().select('-_id');
-    console.log('Données récupérées avec succès :', data);
   } catch (err) {
     console.error('Erreur lors de la récupération des données :', err);
   }
@@ -45,7 +46,6 @@ app.get('/telecom', async (req, res) => {
     const randomIndex = Math.floor(Math.random() * data.length);
     const randomData = data[randomIndex];
 
-    console.log('Donnée aléatoire récupérée avec succès :', randomData);
     res.json(randomData);
   } catch (err) {
     console.error('Erreur lors de la récupération des données aléatoires :', err);
@@ -64,14 +64,10 @@ function compareInfo(dict1, dict2) {
 }
 
 // Route POST pour le déclencheur
-app.post('/trigger', async (req, res) => {
+router.post('/trigger', async (req, res) => {
   const action = req.body.trigger;
   console.log("Nom entré: " + action);
   res.json({ success: true, message: action });
-
-  // Assurez-vous que `name` est défini
-  const name = action;
-
   try {
     switch (action) {
       case 'newgame':
@@ -81,15 +77,15 @@ app.post('/trigger', async (req, res) => {
         console.log('Langue au chat');
         break;
       default:
-        console.log('Comparaison avec ' + action);
-        const foundData = data.find(item => item.Nom === name);
+        ////console.log('Comparaison avec ' + action);
+        const foundData = data.find(item => item.Nom === action);
         if (!foundData) {
-          console.error(`Aucune donnée trouvée avec le nom "${name}"`);
-          res.status(404).json({ error: `Aucune donnée trouvée avec le nom "${name}"` });
+          console.error(`Aucune donnée trouvée avec le nom "${action}"`);
+          res.status(404).json({ error: `Aucune donnée trouvée avec le nom "${action}}"` });
           return;
         }
-        const comparisonResult = compareInfo(foundData, foundData); // Utilisation de foundData pour dic1 et dic2
-        console.log('Résultat de la comparaison :', comparisonResult);
+        ///const comparisonResult = compareInfo(foundData, foundData); // Utilisation de foundData pour dic1 et dic2
+        ///console.log('Résultat de la comparaison :', comparisonResult);
         await envoiInfos(foundData);
     }
   } catch (error) {
@@ -100,8 +96,9 @@ app.post('/trigger', async (req, res) => {
 
 // Fonction pour envoyer les informations à l'historique
 async function envoiInfos(message) {
+  console.log(JSON.stringify({ historique: message }))
   try {
-    const response = await fetch(`http://localhost:3001/historique`, { // Remplacez l'URL par l'API historique correcte
+    const response = await fetch("api/historique", {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -112,13 +109,14 @@ async function envoiInfos(message) {
     if (!response.ok) {
       throw new Error('Erreur réseau');
     }
-
     console.log('Envoi sur l API réussi');
   } catch (error) {
     console.error('Il y a eu une erreur lors du fetch:', error);
     throw error; // Relancez l'erreur pour la capturer dans le routeur POST
   }
 }
+
+app.use('/api', router);
 
 app.listen(PORT, () => {
   console.log(`Serveur démarré sur le port ${PORT}`);

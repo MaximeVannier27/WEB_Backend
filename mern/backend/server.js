@@ -21,19 +21,52 @@ db.on('error', () => console.error('Erreur de connexion'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-// now we can set the route path & initialize the API
 // function of comparaison
 function compareInfo(dict1, dict2) {
-    res = {}
     for (let key in dict1) {
-      // Check if their values are same
-      if (dict2[key] == dict1[key]) {
-        res[key] = dict1[key];
-      } else {
-        res[key] = false;
-      }
+        if (dict1[key].includes('/')) {
+            if (dict2[key].includes('/')) {
+                let element = dict2[key].split('/');
+                for (let elements in element) {
+                    if (dict1[key].includes(elements) && (!(info_joueur[key]) || !(info_joueur[key].includes(elements)))) {
+                        if ((info_joueur[key]) && info_joueur[key].includes('/')) {
+                            info_joueur[key] = info_joueur[key]+elements;
+                        }
+                        else {
+                            info_joueur[key] = elements + '/';
+                        }
+                    }
+                }
+            }
+            else {
+                if (dict1[key].includes(dict2[key]) && (!(info_joueur[key]) || !(info_joueur[key].includes(dict2[key])))) {
+                    if ((info_joueur[key]) && info_joueur[key].includes('/')) {
+                        info_joueur[key] = info_joueur[key]+dict2[key];
+                    }
+                    else {
+                        info_joueur[key] = dict2[key] + '/';
+                    }
+                }
+            }
+        }
+        else {
+            if (dict2[key].includes('/')) {
+                let element = dict2.split('/');
+                for (let elements in element) {
+                    if (elements == dict1[key]) {
+                        info_joueur[key] = dict1[key];
+                    }
+                }
+            }
+            else {
+                if (dict2[key] == dict1[key]) {
+                    info_joueur[key] = dict1[key];
+                }
+            }
+        }
+        
     }
-    return res;
+    return;
 }
 
 async function getDocumentsAsDictionary() {

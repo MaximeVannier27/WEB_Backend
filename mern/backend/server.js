@@ -27,6 +27,7 @@ let info_joueur = {
   "Funfact": false,
 }
 let compteur_essai = 0;
+let liste_perso_globale = [];
 
 mongoose.connect("mongodb://localhost:3010/Donnees");
 var db = mongoose.connection;
@@ -98,10 +99,20 @@ async function getDocumentsAsDictionary(schema) {
   }
 }
 
-const updateStat = async (nom,clé,val) => {
+const updateStatTrouve = async (nom,val) => {
   try {
     let stat = await Statistique.findOne({ Nom: nom });
-    stat.clé += val;
+    stat.Trouvé += val;
+    await stat.save();
+  } catch (error) {
+    console.error("Une erreur s'est produite lors de la mise à jour de la BDD/STATISTIQUES:", error);
+  }
+};
+
+const updateStatTirage = async (nom,val) => {
+  try {
+    let stat = await Statistique.findOne({ Nom: nom });
+    stat.Tirage += val;
     await stat.save();
   } catch (error) {
     console.error("Une erreur s'est produite lors de la mise à jour de la BDD/STATISTIQUES:", error);
@@ -150,6 +161,7 @@ router.post('/trigger', async (req, res) => {
                 for (const key in dictionary) {
                   const doc = dictionary[key];
                   const nom = doc.Nom;
+                  liste_perso_globale.push(nom);
                   const moyenne = Math.round(doc.Trouvé / doc.Tirages);
                   stats_triees.push({ nom, moyenne });
                 }
@@ -173,21 +185,17 @@ router.post('/trigger', async (req, res) => {
             break;
 
         default:
+          liste_perso_globale.splice(liste_perso_globale.indexOf(action),1);
           let foundData = {};
           for (const key in data) {
             let doc = data[key];
-            console.log(key)
             if (doc.Nom==action) {
-              console.log("Found data iteration")
-              console.log(doc)
               foundData = doc;
               break;
             }
           }
           delete foundData._id
           historique.push(foundData)
-          console.log("FOUNDATA")
-          console.log(foundData)
           if (!foundData) {
             console.error(`Aucune donnée trouvée avec le nom "${action}"`);
             return res.status(404).json({ error: `Aucune donnée trouvée avec le nom "${action}"` });
@@ -195,8 +203,8 @@ router.post('/trigger', async (req, res) => {
           console.log('Comparaison avec ' + action);
           compteur_essai += 1;
           if (dataPerso["Nom"]==foundData["Nom"]) {
-            updateStat(dataPerso["Nom"],Trouvé,compteur_essai)
-            updateStat(dataPerso["Nom"],Tirages,1)
+            updateStatTrouve(dataPerso["Nom"],compteur_essai)
+            updateStatTirage(dataPerso["Nom"],1)
           }
           console.log("Pas la bonne personne")
           compareInfo(dataPerso, foundData);

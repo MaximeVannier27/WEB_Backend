@@ -205,48 +205,20 @@ router.post('/trigger', async (req, res) => {
           if (dataPerso["Nom"]==foundData["Nom"]) {
             updateStatTrouve(dataPerso["Nom"],compteur_essai)
             updateStatTirage(dataPerso["Nom"],1)
+            info_joueur = dataPerso;
           }
-          console.log("Pas la bonne personne")
-          compareInfo(dataPerso, foundData);
-          console.log(info_joueur)
+          else {
+            console.log("Pas la bonne personne")
+            compareInfo(dataPerso, foundData);
+            console.log(info_joueur)
+          }
           return ;
 }
 });
 
-// Use our router configuration when we call /api
+// // Use our router configuration when we call /api
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-
-
-// // Récupérer les données de la BDD au démarrage du serveur
-// async function fetchData() {
-//   try {
-//     data = await Personnage.find().select('-_id');
-//     return data
-//   } catch (err) {
-//     console.error('Erreur lors de la récupération des données :', err);
-//   }
-// }
-
-// Appeler fetchData une fois au démarrage du serveur
-
-// Tirer aléatoirement une personne dans la BDD
-// app.get('/telecom', async (req, res) => {
-//   try {
-//     if (data.length === 0) {
-//       throw new Error('Aucune donnée disponible');
-//     }
-
-//     const randomIndex = Math.floor(Math.random() * data.length);
-//     const randomData = data[randomIndex];
-//     // dict1 = randomData
-
-//     res.json(randomData);
-//   } catch (err) {
-//     console.error('Erreur lors de la récupération des données aléatoires :', err);
-//     res.status(500).json({ error: err.message || 'Erreur lors de la récupération des données aléatoires' });
-//   }
-// });
 
 function randomData(data) {
   if (data.length === 0) {
@@ -262,42 +234,19 @@ function randomData(data) {
 
 
 
-app.get('/historique', async (req, res) => {
-  try {
-    if (!foundData) {
-      return res.status(404).json({ error: 'Aucune donnée trouvée' });
-    }
-    // Retournez les données trouvées ici
+router.get('/historique', (req, res) => {
     console.log("je suis passé dans l'historique")
     return res.json(historique);
-  } catch (error) {
-    return res.status(500).json({ error: 'Erreur lors de la récupération des données historiques' });
-  }
 });
 
-router.get('/statistiques', async (req, res) => {
-  try {
-    if (!statFinal) {
-      return res.status(404).json({ error : 'Pas de stat trouvée'});
-    }
+router.get('/statistiques', (req, res) => {
     return res.json(statFinal);
-  } catch (error) {
-    console.error('Erreur lors de la récupération des données statistiques :', error);
-    return res.status(500).json({ error: 'Erreur lors de la récupération des données statistiques' });
-  }
 });
 
-router.get('/affichage', async (req, res) => {
-  try {
-    if (!info_joueur) {
-      return res.status(404).json({ error : "Pas d'affichage trouvé"});
-    }
+router.get('/affichage', (req, res) => {
     return res.json(info_joueur);
-  } catch (error) {
-    console.error("Erreur lors de la récupération des données d'affichage :", error);
-    return res.status(500).json({ error: "Erreur lors de la récupération des données d'affichage" });
-  }
 });
+
 
 app.use('/api', router);
 

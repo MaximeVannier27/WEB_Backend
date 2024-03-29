@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const Telecom = require('./model/Telecom');
+const Personnage = require('./model/schema_personnage');
+const Statistique = require('./model/schema_stat')
 const bodyParser = require("body-parser");
 
 const app = express();
@@ -12,6 +13,20 @@ const API_PORT = process.env.API_PORT || 3001;
 const dataPerso = {}
 const historique = []
 const statFinal = {}
+const info_joueur = {
+  "Nom": false,
+  "Sexe": false,
+  "Animal": false,
+  "MBTI": false,
+  "Siecle": false,
+  "Nationalite": false,
+  "Domaine": false,
+  "Formation": false,
+  "Recompense": false,
+  "Image": false,
+  "Funfact": false,
+}
+const compteur_essai = 0;
 
 mongoose.connect("mongodb://localhost:3010/");
 var db = mongoose.connection;
@@ -99,8 +114,6 @@ router.get('/', (req, res) => {
 
 router.post('/trigger', (req, res) => {
     const action = req.body.trigger;
-    let compteur_essai = 0;
-
     console.log("Nom entré: " + action);
     res.json({ success: true, message: action });
     let data = fetchData()
@@ -109,8 +122,19 @@ router.post('/trigger', (req, res) => {
             console.log("Lancement d'une nouvelle partie");
             compteur_essai = 0;
             dataPerso = randomData(data)
-            //choix random de la personnalité
-            // création de dic1 à partir de la BDD
+            info_joueur = {
+              "Nom": false,
+              "Sexe": false,
+              "Animal": false,
+              "MBTI": false,
+              "Siecle": false,
+              "Nationalite": false,
+              "Domaine": false,
+              "Formation": false,
+              "Recompense": false,
+              "Image": false,
+              "Funfact": false,
+            }
             
             (async () => {
               try {
@@ -172,7 +196,7 @@ app.use(bodyParser.json());
 // Récupérer les données de la BDD au démarrage du serveur
 async function fetchData() {
   try {
-    data = await Telecom.find().select('-_id');
+    data = await Personnage.find().select('-_id');
     return data
   } catch (err) {
     console.error('Erreur lors de la récupération des données :', err);
@@ -224,12 +248,6 @@ router.get('/historique', async (req, res) => {
   }
 });
 
-app.use('/api', router);
-
-app.listen(PORT, () => {
-  console.log(`Serveur démarré sur le port ${PORT}`);
-});
-
 router.get('/statistiques', async (req, res) => {
   try {
     if (!statFinal) {
@@ -240,4 +258,23 @@ router.get('/statistiques', async (req, res) => {
     console.error('Erreur lors de la récupération des données statistiques :', error);
     return res.status(500).json({ error: 'Erreur lors de la récupération des données statistiques' });
   }
-})
+});
+
+router.get('/affichage', async (req, res) => {
+  try {
+    if (!info_joueur) {
+      return res.status(404).json({ error : "Pas d'affichage trouvé"});
+    }
+    return res.json(info_joueur);
+  } catch (error) {
+    console.error("Erreur lors de la récupération des données d'affichage :", error);
+    return res.status(500).json({ error: "Erreur lors de la récupération des données d'affichage" });
+  }
+});
+
+app.use('/api', router);
+
+app.listen(PORT, () => {
+  console.log(`Serveur démarré sur le port ${PORT}`);
+});
+

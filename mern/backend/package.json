@@ -1,8 +1,15 @@
 {
   "dependencies": {
+<<<<<<< HEAD
     "axios": "^1.6.8",
     "express": "^4.19.1",
     "mongoose": "^8.2.1",
     "node-fetch": "^3.3.2"
+=======
+    "express": "^4.18.3",
+    "mongod": "^2.0.0",
+    "mongodb": "^6.5.0",
+    "mongoose": "^8.2.3"
+>>>>>>> 8eab63d07e944190bc46ca9bab76d5fe40b39900
   }
 }

@@ -39,11 +39,7 @@ app.use(bodyParser.json());
 // function of comparaison
 function compareInfo(dict1, dict2) {
     for (let key in dict1) {
-        console.log("le problème est içi")
-        console.log(dict1)
-        console.log(dict1[key])
-        console.log(key)
-        if (dict1[key].includes('/')) {
+        if (key === "Nationalite" && dict1[key].includes('/')) {
             if (dict2[key].includes('/')) {
                 let element = dict2[key].split('/');
                 for (let elements in element) {
@@ -69,8 +65,8 @@ function compareInfo(dict1, dict2) {
             }
         }
         else {
-            if (dict2[key].includes('/')) {
-                let element = dict2.split('/');
+            if (key == "Nationalite" && dict2[key].includes('/')) {
+                let element = dict2[key].split('/');
                 for (let elements in element) {
                     if (elements == dict1[key]) {
                         info_joueur[key] = dict1[key];
@@ -126,7 +122,9 @@ router.post('/trigger', async (req, res) => {
         case 'newgame':
             console.log("Lancement d'une nouvelle partie");
             compteur_essai = 0;
-            dataPerso = randomData(data);
+            let dataPerso_temp = randomData(data);
+            delete dataPerso_temp._id
+            dataPerso = dataPerso_temp
             console.log("DATA perso")
             console.log(dataPerso)
             info_joueur = {
@@ -186,6 +184,7 @@ router.post('/trigger', async (req, res) => {
               break;
             }
           }
+          delete foundData._id
           historique.push(foundData)
           console.log("FOUNDATA")
           console.log(foundData)
@@ -196,13 +195,13 @@ router.post('/trigger', async (req, res) => {
           console.log('Comparaison avec ' + action);
           compteur_essai += 1;
           if (dataPerso["Nom"]==foundData["Nom"]) {
-            updateStat(dataPerso["Nom"],"Trouvé",compteur_essai)
-            updateStat(dataPerso["Nom"],"Tirages",1)
+            updateStat(dataPerso["Nom"],Trouvé,compteur_essai)
+            updateStat(dataPerso["Nom"],Tirages,1)
           }
           console.log("Pas la bonne personne")
           compareInfo(dataPerso, foundData);
           console.log(info_joueur)
-          return res.json({ success: true, message: "Action traitée avec succès" });
+          return ;
 }
 });
 
@@ -211,15 +210,15 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 
-// Récupérer les données de la BDD au démarrage du serveur
-async function fetchData() {
-  try {
-    data = await Personnage.find().select('-_id');
-    return data
-  } catch (err) {
-    console.error('Erreur lors de la récupération des données :', err);
-  }
-}
+// // Récupérer les données de la BDD au démarrage du serveur
+// async function fetchData() {
+//   try {
+//     data = await Personnage.find().select('-_id');
+//     return data
+//   } catch (err) {
+//     console.error('Erreur lors de la récupération des données :', err);
+//   }
+// }
 
 // Appeler fetchData une fois au démarrage du serveur
 
@@ -255,13 +254,14 @@ function randomData(data) {
 
 
 
-router.get('/historique', async (req, res) => {
+app.get('/historique', async (req, res) => {
   try {
     if (!foundData) {
       return res.status(404).json({ error: 'Aucune donnée trouvée' });
     }
     // Retournez les données trouvées ici
-    return res.json(foundData);
+    console.log("je suis passé dans l'historique")
+    return res.json(historique);
   } catch (error) {
     return res.status(500).json({ error: 'Erreur lors de la récupération des données historiques' });
   }

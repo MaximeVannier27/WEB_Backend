@@ -112,7 +112,7 @@ const updateStatTrouve = async (nom,val) => {
 const updateStatTirage = async (nom,val) => {
   try {
     let stat = await Statistique.findOne({ Nom: nom });
-    stat.Tirage += val;
+    stat.Tirages += val;
     await stat.save();
   } catch (error) {
     console.error("Une erreur s'est produite lors de la mise à jour de la BDD/STATISTIQUES:", error);
@@ -194,6 +194,7 @@ router.post('/trigger', async (req, res) => {
               break;
             }
           }
+          
           delete foundData._id
           historique.push(foundData)
           if (!foundData) {

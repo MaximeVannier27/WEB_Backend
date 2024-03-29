@@ -4,7 +4,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
-const Comment = require("./model/comment");
+const Statistique = require("./model/schema_stat");
 
 // and create our instances
 const app = express();
@@ -22,6 +22,30 @@ function compareInfo(dict1, dict2) {
       }
     }
     return res;
+}
+
+const updateStat = async (nom,clé,val) => {
+  try {
+    let stat = await Statistique.findOne({ Nom: nom });
+    stat.clé += val;
+    await stat.save();
+  } catch (error) {
+    console.error("Une erreur s'est produite lors de la mise à jour de la BDD/STATISTIQUES:", error);
+  }
+};
+
+async function getDocumentsAsDictionary() {
+  try {
+    const documents = await Statistique.find({});
+    const dictionary = {};
+    documents.forEach(doc => {
+      dictionary[doc._id.toString()] = doc.toObject();
+    });
+    return dictionary;
+  } catch (error) {
+    console.error('Erreur :', error);
+    throw error;
+  }
 }
 
 // set our port to either a predetermined port number if you have set it up, or 3001
@@ -52,66 +76,59 @@ router.get('/', (req, res) => {
 
 
 router.post('/trigger', (req, res) => {
+    const action = req.body.trigger;
+    let compteur_essai = 0;
 
-const action = req.body.trigger;
-let compteur_essai = 0;
+    console.log("Nom entré: " + action);
+    res.json({ success: true, message: action });
 
-console.log("Nom entré: " + action);
-res.json({ success: true, message: action });
+    switch (action) {
+        case 'newgame':
+            console.log("Lancement d'une nouvelle partie");
+            compteur_essai = 0;
+            //choix random de la personnalité
+            
+            (async () => {
+              try {
+                const dictionary = await getDocumentsAsDictionary();
+                let stats_triees = [];
+                let stats_envoi = { "pire": [], "meilleur": [] };
 
-switch (action) {
-    case 'newgame':
-        console.log("Lancement d'une nouvelle partie");
-        compteur_essai = 0;
-        // choix random Perso
+                for (const key in dictionary) {
+                  const doc = dictionary[key];
+                  const nom = doc.Nom;
+                  const moyenne = Math.round(doc.Trouvé / doc.Tirages);
+                  stats_triees.push({ nom, moyenne });
+                }
 
-        let stats = {"nom": "", "moyenne":0};
-        let stats_triees = [];
-        let stats_envoi = {"meilleur": [], "pire":[]};
+                stats_triees.sort((a, b) => b.moyenne - a.moyenne);
 
-        for (const i in 0/*lire dans Statistiques.Statistiques*/) {
-          stats["nom"] = i["nom"];
-          stats["moyenne"] = i["Trouvé"]/i["Tirages"];
-          if (stats_triees.length==0) {
-            stats_triees.push(stats)
-          } else {
-            for (let j = 0; j<stats_triees.length; j++) {
-              if (stats["moyenne"]<=stats_triees[j]["moyenne"] || j==stats_triees.length-1) {
-                stats_triees.splice(j,0,stats);
-                break;
+                stats_envoi.pire = stats_triees.slice(0, 5);
+                stats_envoi.meilleur = stats_triees.slice(-5);
+
+                console.log(stats_envoi);
+              } catch (error) {
+                console.error("Erreur lors de la récupération des documents :", error);
               }
+            })();
+            
+            //envoi au front de stats_envoi
+
+            break;
+        case 'abandon':
+            console.log('Langue au chat');
+            break;
+
+        default:
+            console.log('Comparaison avec' + action);
+            compteur_essai += 1;
+            if (dic1["Nom"]==dic2["Nom"]) {
+              updateStat(dic1["Nom"],Trouvé,compteur_essai)
+              updateStat(dic1["Nom"],Tirages,1)
             }
-          }
-        }
-
-        for (let i = 0; i<5;i++) {
-          stats_envoi["meilleur"].push(stats_triees[i]);
-          stats_envoi["pire"].push(stats_triees[stats_triees.length-i]);
-        }
-        
-        //envoi au front de stats_envoi
-
-        break;
-    case 'abandon':
-        console.log('Langue au chat');
-        break;
-
-    default:
-        console.log('Comparaison avec' + action);
-        compteur_essai += 1;
-        if (dic1["Nom"]==dic2["Nom"]) {
-          //+compteur_essai dans la base de données à Statistiques.Statistiques[dic1["Nom"]][Trouvé]
-
-
-          //+1 dans la base de données à Statistiques.Statistiques[dic1["Nom"]][Tirages]
-          db.Statistiques.updateOne(
-            {"Nom": dic1["Nom"]},
-            {$inc: {"Tirages": 1}}
-          );
-        }
-        const comparisonResult = compareInfo(dic1, dic2);
-        let responseData = {"success": true, "etatDuJeu": comparisonResult};
-        res.json(responseData);
+            const comparisonResult = compareInfo(dic1, dic2);
+            let responseData = {"success": true, "etatDuJeu": comparisonResult};
+            res.json(responseData);
 }
 });
 

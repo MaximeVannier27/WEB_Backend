@@ -86,7 +86,9 @@ router.post('/trigger', (req, res) => {
         case 'newgame':
             console.log("Lancement d'une nouvelle partie");
             compteur_essai = 0;
+
             //choix random de la personnalité
+            // création de dic1 à partir de la BDD
             
             (async () => {
               try {

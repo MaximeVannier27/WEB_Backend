@@ -10,10 +10,10 @@ const router = express.Router();
 
 // set our port to either a predetermined port number if you have set it up, or 3001
 const API_PORT = process.env.API_PORT || 3001;
-const dataPerso = {}
-const historique = []
-const statFinal = {}
-const info_joueur = {
+let dataPerso = {}
+let historique = []
+let statFinal = {}
+let info_joueur = {
   "Nom": false,
   "Sexe": false,
   "Animal": false,
@@ -26,7 +26,7 @@ const info_joueur = {
   "Image": false,
   "Funfact": false,
 }
-const compteur_essai = 0;
+let compteur_essai = 0;
 
 mongoose.connect("mongodb://localhost:3010/Donnees");
 var db = mongoose.connection;
@@ -39,6 +39,10 @@ app.use(bodyParser.json());
 // function of comparaison
 function compareInfo(dict1, dict2) {
     for (let key in dict1) {
+        console.log("le problème est içi")
+        console.log(dict1)
+        console.log(dict1[key])
+        console.log(key)
         if (dict1[key].includes('/')) {
             if (dict2[key].includes('/')) {
                 let element = dict2[key].split('/');
@@ -84,9 +88,9 @@ function compareInfo(dict1, dict2) {
     return;
 }
 
-async function getDocumentsAsDictionary() {
+async function getDocumentsAsDictionary(schema) {
   try {
-    const documents = await Statistique.find({});
+    const documents = await schema.find({});
     const dictionary = {};
     documents.forEach(doc => {
       dictionary[doc._id.toString()] = doc.toObject();
@@ -112,16 +116,19 @@ router.get('/', (req, res) => {
   res.json({ message: 'Hello, World!' });
 });
 
-router.post('/trigger', (req, res) => {
+router.post('/trigger', async (req, res) => {
     const action = req.body.trigger;
     console.log("Nom entré: " + action);
     res.json({ success: true, message: action });
-    let data = fetchData()
+    let data = await getDocumentsAsDictionary(Personnage)
+
     switch (action) {
         case 'newgame':
             console.log("Lancement d'une nouvelle partie");
             compteur_essai = 0;
-            dataPerso = randomData(data)
+            dataPerso = randomData(data);
+            console.log("DATA perso")
+            console.log(dataPerso)
             info_joueur = {
               "Nom": false,
               "Sexe": false,
@@ -134,11 +141,11 @@ router.post('/trigger', (req, res) => {
               "Recompense": false,
               "Image": false,
               "Funfact": false,
-            }
+            };
             
             (async () => {
               try {
-                const dictionary = await getDocumentsAsDictionary();
+                const dictionary = await getDocumentsAsDictionary(Statistique);
                 let stats_triees = [];
                 let stats_envoi = { "pire": [], "meilleur": [] };
 
@@ -168,22 +175,33 @@ router.post('/trigger', (req, res) => {
             break;
 
         default:
-          let foundData = data.find(item => item.Nom === action);
+          let foundData = {};
+          for (const key in data) {
+            let doc = data[key];
+            console.log(key)
+            if (doc.Nom==action) {
+              console.log("Found data iteration")
+              console.log(doc)
+              foundData = doc;
+              break;
+            }
+          }
           historique.push(foundData)
+          console.log("FOUNDATA")
           console.log(foundData)
           if (!foundData) {
             console.error(`Aucune donnée trouvée avec le nom "${action}"`);
             return res.status(404).json({ error: `Aucune donnée trouvée avec le nom "${action}"` });
           }
-          console.log('Comparaison avec' + action);
+          console.log('Comparaison avec ' + action);
           compteur_essai += 1;
           if (dataPerso["Nom"]==foundData["Nom"]) {
-            updateStat(dataPerso["Nom"],Trouvé,compteur_essai)
-            updateStat(dataPerso["Nom"],Tirages,1)
+            updateStat(dataPerso["Nom"],"Trouvé",compteur_essai)
+            updateStat(dataPerso["Nom"],"Tirages",1)
           }
-          const comparisonResult = compareInfo(dataPerso, foundData);
-          let responseData = {"success": true, "etatDuJeu": comparisonResult};
-          res.json(responseData);
+          console.log("Pas la bonne personne")
+          compareInfo(dataPerso, foundData);
+          console.log(info_joueur)
           return res.json({ success: true, message: "Action traitée avec succès" });
 }
 });
@@ -227,9 +245,11 @@ function randomData(data) {
   if (data.length === 0) {
     throw new Error('Aucune donnée disponible');
   }
-
-  let randomIndex = Math.floor(Math.random() * data.length);
-  let randomData = data[randomIndex];
+  let randomIndex = Math.floor(Math.random() * Object.keys(data).length);
+  console.log(randomIndex)
+  let randomKey = Object.keys(data)[randomIndex]
+  console.log(randomKey)
+  let randomData = data[randomKey];
   return randomData
 }
 
@@ -243,7 +263,6 @@ router.get('/historique', async (req, res) => {
     // Retournez les données trouvées ici
     return res.json(foundData);
   } catch (error) {
-    console.error('Erreur lors de la récupération des données historiques :', error);
     return res.status(500).json({ error: 'Erreur lors de la récupération des données historiques' });
   }
 });

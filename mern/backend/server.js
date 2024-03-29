@@ -28,7 +28,7 @@ const info_joueur = {
 }
 const compteur_essai = 0;
 
-mongoose.connect("mongodb://localhost:3010/");
+mongoose.connect("mongodb://localhost:3010/Donnees");
 var db = mongoose.connection;
 db.on('error', () => console.error('Erreur de connexion'));
 

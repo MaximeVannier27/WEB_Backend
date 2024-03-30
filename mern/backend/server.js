@@ -115,7 +115,6 @@ async function getAllCharacterNames(schema) {
 const updateStatTrouve = async (nom,val) => {
   try {
     let stat = await Statistique.findOne({ Nom: nom });
-    console.log(stat.Trouvé)
     stat.Trouvé += val;
     await stat.save();
   } catch (error) {
@@ -200,6 +199,7 @@ router.post('/trigger', async (req, res) => {
         case 'abandon':
             console.log('Langue au chat');
             info_joueur=dataPerso;
+            liste_noms_temp = []
             break;
 
         default:
@@ -216,11 +216,12 @@ router.post('/trigger', async (req, res) => {
           
           delete foundData._id
           historique.push(foundData)
+          let liste_noms_temp_1 = liste_noms_temp.filter(element => element !== action);
+          liste_noms_temp = liste_noms_temp_1;
           if (!foundData) {
             console.error(`Aucune donnée trouvée avec le nom "${action}"`);
             return res.status(404).json({ error: `Aucune donnée trouvée avec le nom "${action}"` });
           }
-          console.log('Comparaison avec ' + action);
           compteur_essai += 1;
           if (dataPerso["Nom"]==foundData["Nom"]) {
             updateStatTrouve(dataPerso["Nom"],compteur_essai)
@@ -231,8 +232,7 @@ router.post('/trigger', async (req, res) => {
             console.log("Pas la bonne personne")
             compareInfo(dataPerso, foundData);
             // Mettre à jour la liste de noms temporaire après la comparaison
-            let liste_noms_temp_1 = liste_noms_temp.filter(element => element !== action);
-            liste_noms_temp = liste_noms_temp_1;
+            
             console.log(info_joueur)
           }
           return ;
@@ -272,6 +272,31 @@ router.get('/statistiques', (req, res) => {
 router.get('/affichage', (req, res) => {
     return res.json(info_joueur);
 });
+
+(async () => {
+  try {
+    const dictionary = await getDocumentsAsDictionary(Statistique);
+    let stats_triees = [];
+    let stats_envoi = { "pire": [], "meilleur": [] };
+
+    for (const key in dictionary) {
+      const doc = dictionary[key];
+      const nom = doc.Nom;
+      liste_perso_globale.push(nom);
+      const moyenne = Math.round(doc.Trouvé / doc.Tirages);
+      stats_triees.push({ nom, moyenne });
+    }
+
+    stats_triees.sort((a, b) => b.moyenne - a.moyenne);
+
+    stats_envoi.pire = stats_triees.slice(0, 5);
+    stats_envoi.meilleur = stats_triees.slice(-5);
+
+    statFinal = stats_envoi
+  } catch (error) {
+    console.error("Erreur lors de la récupération des documents :", error);
+  }
+})();
 
 app.use('/api', router);
 

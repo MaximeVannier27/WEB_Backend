@@ -41,16 +41,16 @@ app.use(bodyParser.json());
 // function of comparaison
 function compareInfo(dict1, dict2) {
     for (let key in dict1) {
-        if (key === "Nationalite" && dict1[key].includes('/')) {
+        if (key == "Nationalite" && dict1[key].includes('/')) {
             if (dict2[key].includes('/')) {
                 let element = dict2[key].split('/');
                 for (let elements in element) {
-                    if (dict1[key].includes(elements) && (!(info_joueur[key]) || !(info_joueur[key].includes(elements)))) {
+                    if (dict1[key].includes(element[elements]) && (!(info_joueur[key]) || !(info_joueur[key].includes(element[elements])))) {
                         if ((info_joueur[key]) && info_joueur[key].includes('/')) {
-                            info_joueur[key] = info_joueur[key]+elements;
+                            info_joueur[key] = info_joueur[key]+element[elements];
                         }
                         else {
-                            info_joueur[key] = elements + '/';
+                            info_joueur[key] = element[elements] + '/';
                         }
                     }
                 }
@@ -70,7 +70,7 @@ function compareInfo(dict1, dict2) {
             if (key == "Nationalite" && dict2[key].includes('/')) {
                 let element = dict2[key].split('/');
                 for (let elements in element) {
-                    if (elements == dict1[key]) {
+                    if (element[elements] == dict1[key]) {
                         info_joueur[key] = dict1[key];
                     }
                 }

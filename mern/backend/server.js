@@ -12,6 +12,7 @@ const router = express.Router();
 const API_PORT = process.env.API_PORT || 3001;
 let dataPerso = {}
 let historique = []
+let liste_noms_temp = []
 let statFinal = {}
 let info_joueur = {
   "Nom": false,
@@ -40,16 +41,16 @@ app.use(bodyParser.json());
 // function of comparaison
 function compareInfo(dict1, dict2) {
     for (let key in dict1) {
-        if (key === "Nationalite" && dict1[key].includes('/')) {
+        if (key == "Nationalite" && dict1[key].includes('/')) {
             if (dict2[key].includes('/')) {
                 let element = dict2[key].split('/');
                 for (let elements in element) {
-                    if (dict1[key].includes(elements) && (!(info_joueur[key]) || !(info_joueur[key].includes(elements)))) {
+                    if (dict1[key].includes(element[elements]) && (!(info_joueur[key]) || !(info_joueur[key].includes(element[elements])))) {
                         if ((info_joueur[key]) && info_joueur[key].includes('/')) {
-                            info_joueur[key] = info_joueur[key]+elements;
+                            info_joueur[key] = info_joueur[key]+element[elements];
                         }
                         else {
-                            info_joueur[key] = elements + '/';
+                            info_joueur[key] = element[elements] + '/';
                         }
                     }
                 }
@@ -69,7 +70,7 @@ function compareInfo(dict1, dict2) {
             if (key == "Nationalite" && dict2[key].includes('/')) {
                 let element = dict2[key].split('/');
                 for (let elements in element) {
-                    if (elements == dict1[key]) {
+                    if (element[elements] == dict1[key]) {
                         info_joueur[key] = dict1[key];
                     }
                 }
@@ -98,6 +99,18 @@ async function getDocumentsAsDictionary(schema) {
     throw error;
   }
 }
+
+async function getAllCharacterNames(schema) {
+  try {
+    const documents = await schema.find({});
+    const names = documents.map(doc => doc.Nom); // Extracting only the 'Nom' field
+    return names;
+  } catch (error) {
+    console.error('Erreur :', error);
+    throw error;
+  }
+}
+
 
 const updateStatTrouve = async (nom,val) => {
   try {
@@ -128,7 +141,8 @@ router.post('/trigger', async (req, res) => {
     console.log("Nom entré: " + action);
     res.json({ success: true, message: action });
     let data = await getDocumentsAsDictionary(Personnage)
-
+    const liste_noms_complete = await getAllCharacterNames(Personnage);
+    
     switch (action) {
         case 'newgame':
             console.log("Lancement d'une nouvelle partie");
@@ -136,8 +150,9 @@ router.post('/trigger', async (req, res) => {
             let dataPerso_temp = randomData(data);
             delete dataPerso_temp._id
             dataPerso = dataPerso_temp
-            console.log("DATA perso")
-            console.log(dataPerso)
+            // Mettre à jour la liste de noms complète
+            liste_noms_temp = liste_noms_complete;
+            historique = []
             info_joueur = {
               "Nom": false,
               "Sexe": false,
@@ -189,6 +204,7 @@ router.post('/trigger', async (req, res) => {
           let foundData = {};
           for (const key in data) {
             let doc = data[key];
+            if (doc.Nom==action)
             if (doc.Nom==action) {
               foundData = doc;
               break;
@@ -211,6 +227,9 @@ router.post('/trigger', async (req, res) => {
           else {
             console.log("Pas la bonne personne")
             compareInfo(dataPerso, foundData);
+            // Mettre à jour la liste de noms temporaire après la comparaison
+            let liste_noms_temp_1 = liste_noms_temp.filter(element => element !== action);
+            liste_noms_temp = liste_noms_temp_1;
             console.log(info_joueur)
           }
           return ;
@@ -233,11 +252,14 @@ function randomData(data) {
   return randomData
 }
 
-
-
 router.get('/historique', (req, res) => {
-    console.log("je suis passé dans l'historique")
     return res.json(historique);
+});
+
+router.get('/noms', (req, res) => {
+  ///console.log("je suis dans les noms")
+  ///console.log(liste_noms_temp);
+  return res.json(liste_noms_temp);
 });
 
 router.get('/statistiques', (req, res) => {
@@ -248,10 +270,8 @@ router.get('/affichage', (req, res) => {
     return res.json(info_joueur);
 });
 
-
 app.use('/api', router);
 
 app.listen(PORT, () => {
   console.log(`Serveur démarré sur le port ${PORT}`);
 });
-

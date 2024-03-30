@@ -115,6 +115,7 @@ async function getAllCharacterNames(schema) {
 const updateStatTrouve = async (nom,val) => {
   try {
     let stat = await Statistique.findOne({ Nom: nom });
+    console.log(stat.Trouvé)
     stat.Trouvé += val;
     await stat.save();
   } catch (error) {
@@ -150,6 +151,7 @@ router.post('/trigger', async (req, res) => {
             let dataPerso_temp = randomData(data);
             delete dataPerso_temp._id
             dataPerso = dataPerso_temp
+            console.log(dataPerso);
             // Mettre à jour la liste de noms complète
             liste_noms_temp = liste_noms_complete;
             historique = []
@@ -197,6 +199,7 @@ router.post('/trigger', async (req, res) => {
             break;
         case 'abandon':
             console.log('Langue au chat');
+            info_joueur=dataPerso;
             break;
 
         default:

@@ -152,6 +152,7 @@ router.post('/trigger', async (req, res) => {
             dataPerso = dataPerso_temp
             // Mettre à jour la liste de noms complète
             liste_noms_temp = liste_noms_complete;
+            historique = []
             info_joueur = {
               "Nom": false,
               "Sexe": false,

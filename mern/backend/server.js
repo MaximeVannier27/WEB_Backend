@@ -179,7 +179,7 @@ router.post('/trigger', async (req, res) => {
                   const nom = doc.Nom;
                   liste_perso_globale.push(nom);
                   const moyenne = Math.round(doc.Trouvé / doc.Tirages);
-                  stats_triees.push({ nom, moyenne });
+                  stats_triees.push({ "nom": nom, "moyenne":moyenne });
                 }
 
                 stats_triees.sort((a, b) => b.moyenne - a.moyenne);
@@ -193,7 +193,6 @@ router.post('/trigger', async (req, res) => {
               }
             })();
             
-            //envoi au front de stats_envoi
 
             break;
         case 'abandon':
@@ -284,7 +283,7 @@ router.get('/affichage', (req, res) => {
       const nom = doc.Nom;
       liste_perso_globale.push(nom);
       const moyenne = Math.round(doc.Trouvé / doc.Tirages);
-      stats_triees.push({ nom, moyenne });
+      stats_triees.push({ "nom": nom, "moyenne":moyenne });
     }
 
     stats_triees.sort((a, b) => b.moyenne - a.moyenne);

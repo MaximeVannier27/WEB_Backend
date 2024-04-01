@@ -214,7 +214,7 @@ router.post('/trigger', async (req, res) => {
           }
           
           delete foundData._id
-          historique.push(foundData)
+          historique.unshift(foundData);
           let liste_noms_temp_1 = liste_noms_temp.filter(element => element !== action);
           liste_noms_temp = liste_noms_temp_1;
           if (!foundData) {
